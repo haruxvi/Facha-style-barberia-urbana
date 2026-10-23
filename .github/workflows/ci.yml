@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: facha
+          POSTGRES_PASSWORD: facha_ci_password
+          POSTGRES_DB: facha_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U facha -d facha_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Valores SOLO para CI (no son secretos reales)
+      NODE_ENV: test
+      APP_URL: http://localhost:3000
+      DATABASE_URL: postgresql://facha:facha_ci_password@127.0.0.1:5432/facha_test
+      TEST_DATABASE_URL: postgresql://facha:facha_ci_password@127.0.0.1:5432/facha_test
+      SESSION_SECRET: ci-only-session-secret-0123456789abcdef0123
+      ENCRYPTION_KEY: Y2ktb25seS1lbmNyeXB0aW9uLWtleS0zMi1ieXRlcyE=
+      CRON_SECRET: ci-only-cron-secret-0123
+      EMAIL_PROVIDER: console
+      PAYMENTS_FAKE_ENABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

@@ -1,0 +1,20 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
+
+# Cliente Prisma generado
+src/generated/
+
+# Variables de entorno: NUNCA se suben
+.env
+.env.*
+!.env.example
+
+.vercel
+.DS_Store
+*.log

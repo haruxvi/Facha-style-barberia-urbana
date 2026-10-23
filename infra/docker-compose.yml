@@ -1,0 +1,26 @@
+# Infraestructura SOLO para desarrollo local y tests.
+# En producción la base de datos es Supabase (Postgres gestionado).
+name: facha-style
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: facha
+      POSTGRES_PASSWORD: facha_dev_password
+      POSTGRES_DB: facha_local
+    ports:
+      # Enlazado solo a localhost: no se expone en la red local.
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facha -d facha_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

@@ -1,0 +1,827 @@
+// Facha Style · modelo de datos
+// Convenciones:
+// - Todas las entidades de una barbería llevan tenantId.
+// - Las relaciones obligatorias entre entidades del mismo tenant usan FK compuestas (tenantId, id),
+//   de modo que la base de datos impide mezclar datos de barberías distintas.
+// - Importes en enteros en la unidad menor de la moneda (CLP = pesos enteros).
+// - Fechas como instantes (timestamptz). La zona horaria de la sucursal se usa solo para mostrar/calcular.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  BARBER
+  RECEPTIONIST
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PaymentPolicy {
+  NONE // se paga en el local
+  OPTIONAL // el cliente elige pagar online o en el local
+  DEPOSIT_REQUIRED // seña obligatoria
+  FULL_REQUIRED // pago total obligatorio
+}
+
+enum PaymentRequirement {
+  NONE
+  DEPOSIT
+  FULL
+}
+
+enum AppointmentStatus {
+  PENDING_PAYMENT // hold temporal mientras se paga
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  EXPIRED // hold vencido sin pago
+}
+
+enum BookingSource {
+  WEB
+  WHATSAPP
+  ADMIN
+}
+
+enum ActorType {
+  CUSTOMER
+  STAFF
+  SYSTEM
+  BOT
+  PROVIDER
+}
+
+enum ScheduleExceptionType {
+  TIME_OFF // vacaciones, ausencia, bloqueo manual, feriado
+  EXTRA_HOURS // horario adicional puntual
+}
+
+enum PaymentProvider {
+  MERCADOPAGO
+  FAKE // solo desarrollo/tests, deshabilitado en producción
+}
+
+enum PaymentStatus {
+  PENDING
+  IN_PROCESS
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum Channel {
+  WHATSAPP
+  EMAIL
+}
+
+enum ConsentPurpose {
+  TRANSACTIONAL // confirmaciones y recordatorios de sus reservas
+  MARKETING // promociones, reactivación de clientes inactivos
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  CANCELLED
+  SKIPPED
+}
+
+enum AutomationTrigger {
+  BOOKING_CONFIRMED
+  REMINDER
+  RESCHEDULED
+  CANCELLED
+  POST_VISIT
+  REVIEW_REQUEST
+  INACTIVE_FOLLOWUP
+  OWNER_NEW_BOOKING
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+  DEAD
+}
+
+enum IntegrationKind {
+  WHATSAPP
+  MERCADOPAGO
+  EMAIL
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  BOOKED
+  CANCELLED
+}
+
+// ───────────────────────── Tenancy ─────────────────────────
+
+model Tenant {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  slug        String       @unique
+  name        String
+  status      TenantStatus @default(ACTIVE)
+  timezone    String       @default("America/Santiago")
+  currency    String       @default("CLP") @db.Char(3)
+  description String?
+  publicPhone String?
+  instagram   String?
+  logoUrl     String?
+
+  // Reglas de reserva
+  paymentPolicy             PaymentPolicy @default(NONE)
+  depositAmount             Int           @default(0)
+  holdMinutes               Int           @default(15)
+  slotIntervalMinutes       Int           @default(15)
+  minNoticeMinutes          Int           @default(60)
+  bookingHorizonDays        Int           @default(30)
+  cancellationWindowMinutes Int           @default(180)
+  rescheduleWindowMinutes   Int           @default(180)
+  bookingTerms              String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  branches       Branch[]
+  memberships    Membership[]
+  services       Service[]
+  barbers        Barber[]
+  customers      Customer[]
+  appointments   Appointment[]
+  templates      MessageTemplate[]
+  automations    AutomationRule[]
+  integrations   TenantIntegration[]
+  qrCampaigns    QrCampaign[]
+  subscription   Subscription?
+  invitations    Invitation[]
+}
+
+model Branch {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  slug      String
+  name      String
+  address   String?
+  phone     String?
+  timezone  String   @default("America/Santiago")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbers        BarberBranch[]
+  services       ServiceBranch[]
+  workingHours   WorkingHours[]
+  appointments   Appointment[]
+  exceptions     ScheduleException[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, slug])
+}
+
+model Subscription {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  tenantId         String    @unique @db.Uuid
+  plan             String    @default("starter")
+  status           String    @default("active")
+  currentPeriodEnd DateTime? @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Identidad (solo personal) ─────────────────────────
+
+model User {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  email              String    @unique // normalizado a minúsculas
+  name               String
+  passwordHash       String
+  failedLoginCount   Int       @default(0)
+  lockedUntil        DateTime? @db.Timestamptz(3)
+  disabledAt         DateTime? @db.Timestamptz(3)
+  passwordChangedAt  DateTime? @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @db.Timestamptz(3)
+
+  memberships    Membership[]
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+}
+
+model Membership {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  role      Role
+  // Para rol BARBER: perfil de barbero vinculado (portal del barbero)
+  barberId  String?  @unique @db.Uuid
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barber Barber? @relation(fields: [barberId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Session {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  tokenHash      String    @unique
+  userId         String    @db.Uuid
+  activeTenantId String?   @db.Uuid
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  lastSeenAt     DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt      DateTime  @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  tenantId    String    @db.Uuid
+  email       String
+  role        Role
+  tokenHash   String    @unique
+  invitedById String?   @db.Uuid
+  expiresAt   DateTime  @db.Timestamptz(3)
+  acceptedAt  DateTime? @db.Timestamptz(3)
+  revokedAt   DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+/// Contadores de rate limiting en Postgres (no hay Redis en Vercel).
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime @db.Timestamptz(3)
+}
+
+// ───────────────────────── Catálogo ─────────────────────────
+
+model Service {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  tenantId        String   @db.Uuid
+  name            String
+  description     String?
+  priceAmount     Int
+  durationMinutes Int
+  bufferMinutes   Int      @default(0)
+  active          Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbers      BarberService[]
+  branches     ServiceBranch[]
+  appointments Appointment[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, active])
+}
+
+/// Servicio ofrecido en una sucursal, con precio opcional propio.
+model ServiceBranch {
+  tenantId      String  @db.Uuid
+  serviceId     String  @db.Uuid
+  branchId      String  @db.Uuid
+  priceOverride Int?
+  active        Boolean @default(true)
+
+  service Service @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([serviceId, branchId])
+  @@index([tenantId])
+}
+
+model Barber {
+  id                String   @id @default(uuid(7)) @db.Uuid
+  tenantId          String   @db.Uuid
+  displayName       String
+  bio               String?
+  photoUrl          String?
+  active            Boolean  @default(true)
+  // Comisión en puntos básicos (4000 = 40%)
+  commissionBps     Int      @default(0)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branches     BarberBranch[]
+  services     BarberService[]
+  workingHours WorkingHours[]
+  exceptions   ScheduleException[]
+  appointments Appointment[]
+  membership   Membership?
+
+  @@unique([tenantId, id])
+  @@index([tenantId, active])
+}
+
+model BarberBranch {
+  tenantId String @db.Uuid
+  barberId String @db.Uuid
+  branchId String @db.Uuid
+
+  barber Barber @relation(fields: [tenantId, barberId], references: [tenantId, id], onDelete: Cascade)
+  branch Branch @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([barberId, branchId])
+  @@index([tenantId])
+}
+
+model BarberService {
+  tenantId  String @db.Uuid
+  barberId  String @db.Uuid
+  serviceId String @db.Uuid
+
+  barber  Barber  @relation(fields: [tenantId, barberId], references: [tenantId, id], onDelete: Cascade)
+  service Service @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([barberId, serviceId])
+  @@index([tenantId])
+}
+
+// ───────────────────────── Agenda ─────────────────────────
+
+/// Horario semanal recurrente de un barbero en una sucursal, en hora local de la sucursal.
+/// Varias filas por día permiten modelar pausas (p. ej. 10:00-14:00 y 15:00-20:00).
+model WorkingHours {
+  id          String @id @default(uuid(7)) @db.Uuid
+  tenantId    String @db.Uuid
+  barberId    String @db.Uuid
+  branchId    String @db.Uuid
+  weekday     Int // 0 = domingo … 6 = sábado
+  startMinute Int // minutos desde las 00:00 locales
+  endMinute   Int
+
+  barber Barber @relation(fields: [tenantId, barberId], references: [tenantId, id], onDelete: Cascade)
+  branch Branch @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, barberId, weekday])
+}
+
+/// Excepciones puntuales: vacaciones, ausencias, bloqueos manuales o horas extra.
+/// barberId nulo = aplica a toda la sucursal (p. ej. feriado).
+model ScheduleException {
+  id          String                @id @default(uuid(7)) @db.Uuid
+  tenantId    String                @db.Uuid
+  barberId    String?               @db.Uuid
+  branchId    String?               @db.Uuid
+  type        ScheduleExceptionType
+  startsAt    DateTime              @db.Timestamptz(3)
+  endsAt      DateTime              @db.Timestamptz(3)
+  reason      String?
+  createdById String?               @db.Uuid
+  createdAt   DateTime              @default(now()) @db.Timestamptz(3)
+
+  barber Barber? @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, barberId, startsAt])
+}
+
+// ───────────────────────── CRM ─────────────────────────
+
+/// Ficha de cliente final. NO es una cuenta: el cliente no tiene login.
+model Customer {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  tenantId     String    @db.Uuid
+  name         String
+  phoneE164    String
+  email        String?
+  notes        String?
+  preferences  String?
+  visitCount   Int       @default(0)
+  noShowCount  Int       @default(0)
+  lastVisitAt  DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+  anonymizedAt DateTime? @db.Timestamptz(3)
+
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments  Appointment[]
+  consents      CommunicationConsent[]
+  notifications Notification[]
+  waitlist      WaitlistEntry[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, phoneE164])
+  @@index([tenantId, lastVisitAt])
+}
+
+/// Estado actual del consentimiento por canal y finalidad. El historial queda en AuditLog.
+model CommunicationConsent {
+  id         String         @id @default(uuid(7)) @db.Uuid
+  tenantId   String         @db.Uuid
+  customerId String         @db.Uuid
+  channel    Channel
+  purpose    ConsentPurpose
+  granted    Boolean
+  source     String // web_form | whatsapp | admin | unsubscribe_link
+  updatedAt  DateTime       @updatedAt @db.Timestamptz(3)
+  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [tenantId, customerId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([customerId, channel, purpose])
+  @@index([tenantId])
+}
+
+model WaitlistEntry {
+  id          String         @id @default(uuid(7)) @db.Uuid
+  tenantId    String         @db.Uuid
+  customerId  String         @db.Uuid
+  branchId    String         @db.Uuid
+  serviceId   String         @db.Uuid
+  barberId    String?        @db.Uuid
+  desiredDate String // YYYY-MM-DD local
+  status      WaitlistStatus @default(WAITING)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [tenantId, customerId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, desiredDate, status])
+}
+
+// ───────────────────────── Reservas ─────────────────────────
+
+model Appointment {
+  id         String            @id @default(uuid(7)) @db.Uuid
+  tenantId   String            @db.Uuid
+  branchId   String            @db.Uuid
+  barberId   String            @db.Uuid
+  serviceId  String            @db.Uuid
+  customerId String            @db.Uuid
+  status     AppointmentStatus
+  source     BookingSource
+
+  startsAt     DateTime @db.Timestamptz(3)
+  endsAt       DateTime @db.Timestamptz(3)
+  /// endsAt + buffer: intervalo que ocupa realmente la agenda (usado por la restricción de exclusión)
+  blockedUntil DateTime @db.Timestamptz(3)
+
+  // Copia de las condiciones acordadas (el catálogo puede cambiar después)
+  serviceName        String
+  priceAmount        Int
+  currency           String             @db.Char(3)
+  durationMinutes    Int
+  bufferMinutes      Int
+  paymentRequirement PaymentRequirement @default(NONE)
+  amountDue          Int                @default(0) // importe a cobrar online
+  holdExpiresAt      DateTime?          @db.Timestamptz(3)
+
+  customerNotes String?
+  internalNotes String?
+  campaign      String? // código de campaña QR (atribución, sin datos personales)
+
+  idempotencyKey String?
+
+  // Enlace de gestión sin login: el token es un HMAC derivado de (id, versión); no se almacena.
+  // Revocar = incrementar la versión o marcar revokedAt.
+  manageTokenVersion   Int       @default(1)
+  manageTokenExpiresAt DateTime? @db.Timestamptz(3)
+  manageTokenRevokedAt DateTime? @db.Timestamptz(3)
+
+  cancelledAt  DateTime? @db.Timestamptz(3)
+  cancelReason String?
+  checkedInAt  DateTime? @db.Timestamptz(3)
+  completedAt  DateTime? @db.Timestamptz(3)
+  createdById  String?   @db.Uuid
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch        Branch             @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  barber        Barber             @relation(fields: [tenantId, barberId], references: [tenantId, id], onDelete: Restrict)
+  service       Service            @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Restrict)
+  customer      Customer           @relation(fields: [tenantId, customerId], references: [tenantId, id], onDelete: Restrict)
+  events        AppointmentEvent[]
+  payments      Payment[]
+  notifications Notification[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, startsAt])
+  @@index([tenantId, barberId, startsAt])
+  @@index([tenantId, customerId])
+  @@index([status, holdExpiresAt])
+}
+
+model AppointmentEvent {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  tenantId      String             @db.Uuid
+  appointmentId String             @db.Uuid
+  type          String // created | confirmed | cancelled | rescheduled | checked_in | completed | no_show | expired | payment_*
+  fromStatus    AppointmentStatus?
+  toStatus      AppointmentStatus?
+  data          Json?
+  actorType     ActorType
+  actorUserId   String?            @db.Uuid
+  createdAt     DateTime           @default(now()) @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [tenantId, appointmentId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, appointmentId])
+}
+
+// ───────────────────────── Pagos ─────────────────────────
+
+model Payment {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  tenantId          String             @db.Uuid
+  appointmentId     String             @db.Uuid
+  provider          PaymentProvider
+  kind              PaymentRequirement // DEPOSIT | FULL
+  status            PaymentStatus      @default(PENDING)
+  amount            Int
+  currency          String             @db.Char(3)
+  refundedAmount    Int                @default(0)
+  // Identificadores del proveedor (nunca datos de tarjeta)
+  checkoutId        String? // preference id en Mercado Pago
+  checkoutUrl       String?
+  externalPaymentId String?
+  providerStatus    String?
+  providerDetail    String?
+  providerUpdatedAt DateTime?          @db.Timestamptz(3) // para descartar eventos fuera de orden
+  approvedAt        DateTime?          @db.Timestamptz(3)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [tenantId, appointmentId], references: [tenantId, id], onDelete: Restrict)
+  refunds     Refund[]
+
+  @@unique([tenantId, id])
+  @@unique([provider, externalPaymentId])
+  @@index([tenantId, status])
+  @@index([tenantId, appointmentId])
+}
+
+model Refund {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  tenantId         String   @db.Uuid
+  paymentId        String   @db.Uuid
+  amount           Int
+  externalRefundId String?
+  status           String // requested | approved | failed
+  reason           String?
+  createdById      String?  @db.Uuid
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+
+  payment Payment @relation(fields: [tenantId, paymentId], references: [tenantId, id], onDelete: Restrict)
+
+  @@index([tenantId, paymentId])
+}
+
+/// Registro de webhooks recibidos: garantiza idempotencia por (proveedor, clave del evento).
+model PaymentWebhookEvent {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  provider       PaymentProvider
+  eventKey       String
+  tenantId       String?         @db.Uuid
+  signatureValid Boolean
+  payload        Json
+  processedAt    DateTime?       @db.Timestamptz(3)
+  error          String?
+  receivedAt     DateTime        @default(now()) @db.Timestamptz(3)
+
+  @@unique([provider, eventKey])
+}
+
+// ───────────────────────── Comunicaciones ─────────────────────────
+
+model MessageTemplate {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  tenantId   String   @db.Uuid
+  key        String // booking_confirmed | reminder | cancelled | rescheduled | post_visit | review_request | custom_*
+  channel    Channel
+  name       String
+  subject    String?
+  body       String
+  // Plantilla aprobada por Meta (necesaria fuera de la ventana de 24 h)
+  waTemplateName String?
+  waLanguage     String? @default("es")
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key, channel])
+}
+
+model Notification {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  tenantId          String             @db.Uuid
+  customerId        String?            @db.Uuid
+  appointmentId     String?            @db.Uuid
+  channel           Channel
+  trigger           String? // automation trigger o "manual"
+  templateKey       String?
+  destination       String
+  subject           String?
+  body              String
+  status            NotificationStatus @default(QUEUED)
+  provider          String?
+  providerMessageId String?
+  error             String?
+  attempts          Int                @default(0)
+  dedupeKey         String
+  scheduledFor      DateTime           @default(now()) @db.Timestamptz(3)
+  sentAt            DateTime?          @db.Timestamptz(3)
+  deliveredAt       DateTime?          @db.Timestamptz(3)
+  createdById       String?            @db.Uuid
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+
+  customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, dedupeKey])
+  @@index([tenantId, createdAt])
+  @@index([providerMessageId])
+}
+
+model AutomationRule {
+  id            String            @id @default(uuid(7)) @db.Uuid
+  tenantId      String            @db.Uuid
+  trigger       AutomationTrigger
+  channel       Channel
+  templateKey   String
+  // Para REMINDER: minutos antes de la cita. Para POST_VISIT/REVIEW_REQUEST: minutos después.
+  // Para INACTIVE_FOLLOWUP: días de inactividad * 1440.
+  offsetMinutes Int               @default(0)
+  active        Boolean           @default(false)
+  createdAt     DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime          @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, trigger, channel])
+}
+
+model Conversation {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  tenantId      String    @db.Uuid
+  waPhone       String // E.164 del cliente
+  customerId    String?   @db.Uuid
+  state         String    @default("idle")
+  context       Json      @default("{}")
+  handoff       Boolean   @default(false)
+  lastInboundAt DateTime? @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+
+  messages ConversationMessage[]
+
+  @@unique([tenantId, waPhone])
+}
+
+model ConversationMessage {
+  id                String           @id @default(uuid(7)) @db.Uuid
+  tenantId          String           @db.Uuid
+  conversationId    String           @db.Uuid
+  direction         MessageDirection
+  providerMessageId String?          @unique
+  type              String           @default("text")
+  body              String
+  status            String?
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, conversationId, createdAt])
+}
+
+// ───────────────────────── Integraciones, QR, cola, auditoría ─────────────────────────
+
+/// Credenciales por barbería. Los secretos van cifrados (AES-256-GCM con ENCRYPTION_KEY).
+model TenantIntegration {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  tenantId          String          @db.Uuid
+  kind              IntegrationKind
+  enabled           Boolean         @default(false)
+  // Identificador no secreto de la cuenta externa (p. ej. phone_number_id de WhatsApp)
+  externalAccountId String?
+  publicConfig      Json            @default("{}")
+  secretsEncrypted  String?
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, kind])
+  @@unique([kind, externalAccountId])
+}
+
+model QrCampaign {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  code      String // mostrador | espejo | tarjeta | instagram | …
+  label     String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, code])
+}
+
+/// Visitas agregadas por día y campaña (sin datos personales).
+model CampaignVisit {
+  tenantId String @db.Uuid
+  campaign String
+  day      String // YYYY-MM-DD en la zona de la barbería
+  visits   Int    @default(0)
+
+  @@id([tenantId, campaign, day])
+}
+
+/// Cola de trabajos en Postgres (patrón outbox). La procesa Vercel Cron → /api/cron/jobs.
+model Job {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  tenantId    String?   @db.Uuid
+  type        String
+  payload     Json
+  dedupeKey   String?   @unique
+  status      JobStatus @default(PENDING)
+  runAt       DateTime  @default(now()) @db.Timestamptz(3)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5)
+  lockedAt    DateTime? @db.Timestamptz(3)
+  lastError   String?
+  completedAt DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([status, runAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  tenantId    String?  @db.Uuid
+  actorType   ActorType
+  actorUserId String?  @db.Uuid
+  action      String
+  entityType  String?
+  entityId    String?
+  metadata    Json?
+  ip          String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([tenantId, createdAt])
+}
