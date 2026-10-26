@@ -134,6 +134,7 @@ export async function getPublicAppointment(tenantId: string, appointmentId: stri
         select: {
           slug: true,
           name: true,
+          logoUrl: true,
           cancellationWindowMinutes: true,
           rescheduleWindowMinutes: true,
           publicPhone: true,

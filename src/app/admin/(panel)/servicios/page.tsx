@@ -54,9 +54,7 @@ export default async function ServicesPage() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <fieldset className="space-y-1.5">
-          <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
-            Sucursales donde se ofrece
-          </legend>
+          <legend className="mb-2 text-sm font-medium text-ink/90">Sucursales donde se ofrece</legend>
           {branches.map((b) => (
             <Checkbox
               key={b.id}
@@ -68,9 +66,7 @@ export default async function ServicesPage() {
           ))}
         </fieldset>
         <fieldset className="space-y-1.5">
-          <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
-            Barberos habilitados
-          </legend>
+          <legend className="mb-2 text-sm font-medium text-ink/90">Barberos habilitados</legend>
           {barbers.map((b) => (
             <Checkbox
               key={b.id}
@@ -108,7 +104,7 @@ export default async function ServicesPage() {
           </details>
         ))}
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Nuevo servicio</h2>
+          <h2 className="mb-4 heading-section">Nuevo servicio</h2>
           {form()}
         </Card>
       </div>

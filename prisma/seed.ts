@@ -29,14 +29,15 @@ async function main() {
     data: { email: "dueno@facha.dev", name: "Dueño (DEV)", passwordHash },
   });
   const { id: tenantId } = await createTenant({
-    name: "Facha Style",
+    name: "Facha & Style",
     slug: "facha-style",
     ownerUserId: owner.id,
   });
   await db.tenant.update({
     where: { id: tenantId },
     data: {
-      description: "Barbería urbana. Cortes, fades y barba. [DATOS DE DESARROLLO]",
+      description: "Cortes clásicos, fades y barba con navaja. Atención con hora, sin esperas.",
+      logoUrl: "/brand/logo-badge.png",
       publicPhone: "+56 9 0000 0000",
       instagram: "fachastyle.dev",
       paymentPolicy: "OPTIONAL",

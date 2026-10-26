@@ -22,7 +22,7 @@ export default async function UnsubscribePage({ params }: { params: Promise<{ to
   return (
     <main className="mx-auto max-w-md px-4 py-16">
       <Card className="space-y-4">
-        <h1 className="font-display text-2xl uppercase">Darse de baja</h1>
+        <h1 className="heading-page">Darse de baja</h1>
         <p className="text-sm text-muted">
           Dejarás de recibir correos de confirmación, recordatorios y promociones de esta barbería.
         </p>

@@ -57,7 +57,7 @@ export default async function BranchesPage() {
           </details>
         ))}
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Nueva sucursal</h2>
+          <h2 className="mb-4 heading-section">Nueva sucursal</h2>
           {form()}
         </Card>
       </div>

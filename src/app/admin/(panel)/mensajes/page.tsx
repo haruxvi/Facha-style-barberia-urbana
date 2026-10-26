@@ -51,7 +51,7 @@ export default async function MessagesPage({
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Nuevo mensaje</h2>
+          <h2 className="mb-4 heading-section">Nuevo mensaje</h2>
           {customers.length === 0 ? (
             <EmptyState>Aún no hay clientes.</EmptyState>
           ) : (
@@ -91,7 +91,7 @@ export default async function MessagesPage({
         </Card>
 
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Conversaciones de WhatsApp</h2>
+          <h2 className="mb-4 heading-section">Conversaciones de WhatsApp</h2>
           {conversations.length === 0 ? (
             <EmptyState>Sin conversaciones todavía.</EmptyState>
           ) : (
@@ -121,7 +121,7 @@ export default async function MessagesPage({
       {conversation && (
         <Card className="mt-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-display text-lg uppercase tracking-wide">{conversation.waPhone}</h2>
+            <h2 className="heading-section">{conversation.waPhone}</h2>
             {conversation.handoff && (
               <ActionForm
                 action={resolveHandoffAction}
@@ -161,7 +161,7 @@ export default async function MessagesPage({
         </Card>
       )}
 
-      <h2 className="mb-3 mt-8 font-display text-lg uppercase tracking-wide">Registro de envíos</h2>
+      <h2 className="mb-3 mt-8 heading-section">Registro de envíos</h2>
       {notifications.length === 0 ? (
         <EmptyState>Sin envíos todavía.</EmptyState>
       ) : (

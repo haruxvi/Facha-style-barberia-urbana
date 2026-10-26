@@ -26,7 +26,7 @@ export default async function BarberProfilePage() {
       <PageHeader title={barber.displayName} description="Tu perfil público y tus bloqueos de horario." />
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Perfil público</h2>
+          <h2 className="mb-4 heading-section">Perfil público</h2>
           <ActionForm action={updateOwnProfileAction}>
             <Field label="Bio">
               <Input name="bio" defaultValue={barber.bio ?? ""} maxLength={400} />
@@ -37,7 +37,7 @@ export default async function BarberProfilePage() {
           </ActionForm>
         </Card>
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Bloquear mi horario</h2>
+          <h2 className="mb-4 heading-section">Bloquear mi horario</h2>
           <ActionForm action={addExceptionAction} submitLabel="Bloquear" resetOnSuccess>
             <input type="hidden" name="barberId" value={barberId} />
             <input type="hidden" name="type" value="TIME_OFF" />
@@ -71,7 +71,7 @@ export default async function BarberProfilePage() {
           </ul>
         </Card>
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Contraseña</h2>
+          <h2 className="mb-4 heading-section">Contraseña</h2>
           <ActionForm action={changePasswordAction} submitLabel="Cambiar" resetOnSuccess>
             <Field label="Actual">
               <Input name="current" type="password" required autoComplete="current-password" />

@@ -27,16 +27,14 @@ export default async function BarberAgendaPage() {
           const items = list.filter((a) => localParts(a.startsAt, ctx.timezone).date === d);
           return (
             <section key={d}>
-              <h2 className="mb-2 font-display text-sm uppercase tracking-wider text-muted first-letter:uppercase">
-                {d === today ? "Hoy" : formatLocalDate(d)}
-              </h2>
+              <h2 className="mb-2 eyebrow text-muted">{d === today ? "Hoy" : formatLocalDate(d)}</h2>
               {items.length === 0 ? (
                 <EmptyState>Sin citas</EmptyState>
               ) : (
                 <div className="space-y-2">
                   {items.map((a) => (
                     <Card key={a.id} className="flex flex-wrap items-center gap-3 p-4">
-                      <span className="w-14 font-display text-xl text-accent">
+                      <span className="w-14 font-display text-xl tabular-nums text-accent">
                         {formatTime(a.startsAt, ctx.timezone)}
                       </span>
                       <span className="min-w-0 flex-1">

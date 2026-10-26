@@ -27,7 +27,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
     return (
       <Shell>
         <Card>
-          <h1 className="font-display text-2xl uppercase">Gestionar reserva</h1>
+          <h1 className="heading-page">Gestionar reserva</h1>
           <Notice tone="warn">
             {ERRORS[error ?? ""] ??
               "Abre el enlace que te enviamos por WhatsApp o correo para gestionar tu reserva."}
@@ -46,10 +46,10 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
     appt.status === "CONFIRMED" && now <= addMinutes(appt.startsAt, -appt.tenant.rescheduleWindowMinutes);
 
   return (
-    <Shell name={appt.tenant.name}>
+    <Shell name={appt.tenant.name} logoUrl={appt.tenant.logoUrl}>
       <Card className="space-y-5">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="font-display text-2xl uppercase">Tu reserva</h1>
+          <h1 className="heading-page">Tu reserva</h1>
           <AppointmentStatusBadge status={appt.status} />
         </div>
         <div className="rounded-lg border border-line bg-surface-2 p-4 text-sm">
@@ -100,12 +100,20 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   );
 }
 
-function Shell({ name, children }: { name?: string; children: React.ReactNode }) {
+function Shell({
+  name,
+  logoUrl,
+  children,
+}: {
+  name?: string;
+  logoUrl?: string | null;
+  children: React.ReactNode;
+}) {
   return (
-    <main className="bg-stripes min-h-dvh">
+    <main className="bg-brand min-h-dvh">
       <div className="mx-auto max-w-xl px-4 py-10">
         <div className="mb-6">
-          <Logo name={name} small />
+          <Logo name={name} logoUrl={name ? logoUrl : undefined} size="md" />
         </div>
         {children}
       </div>

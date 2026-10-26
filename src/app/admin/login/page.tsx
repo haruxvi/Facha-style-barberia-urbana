@@ -16,7 +16,7 @@ export default async function LoginPage({
   if (await getAuth()) redirect("/admin");
   const sp = await searchParams;
   return (
-    <AuthShell title="Acceso del equipo">
+    <AuthShell title="Acceso del equipo" subtitle="Ingresa para gestionar la agenda y las reservas.">
       {sp.reset && <Notice tone="ok">Contraseña actualizada. Ya puedes ingresar.</Notice>}
       {sp.invitacion && <Notice tone="ok">Invitación aceptada. Ingresa con tu correo.</Notice>}
       <ActionForm action={loginAction} submitLabel="Ingresar" pendingLabel="Ingresando…">

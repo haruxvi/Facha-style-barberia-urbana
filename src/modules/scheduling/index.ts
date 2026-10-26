@@ -9,3 +9,4 @@ export {
   listScheduleExceptions,
   removeScheduleException,
 } from "./schedule-service";
+export { getBranchOpeningHours, mergeIntervals, type OpeningHoursLine } from "./opening-hours";

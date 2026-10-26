@@ -7,7 +7,8 @@ Estado al cierre de esta sesión: núcleo funcional verificado (lint, typecheck,
 - [ ] **Validar WhatsApp con credenciales reales** (número de prueba de Meta): webhook, plantillas *Utility* aprobadas para confirmación y recordatorio, nombres cargados en Automatizaciones → Plantillas. Guía: `docs/integrations.md`.
 - [ ] **Validar Mercado Pago en modo prueba** con usuarios/tarjetas de prueba y la clave secreta de webhooks. Confirmar que `transaction_amount` llega en pesos enteros para CLP.
 - [ ] **Resend**: verificar dominio y probar envío real.
-- [ ] Crear el repositorio git (el usuario lo hará) y conectar Vercel + Supabase según `docs/deployment.md`.
+- [x] Repositorio git creado.
+- [ ] Conectar Vercel + Supabase según `docs/deployment.md` (la demo local ya corre con `docker compose up --build`).
 - [ ] Decidir plan de Vercel o configurar `pg_cron` para procesar la cola cada minuto (recordatorios).
 
 ## Funcionalidad pendiente

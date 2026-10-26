@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { verifyManageToken } from "@/modules/booking";
+import { secureCookies } from "@/shared/env";
 
 /** Cookie con el token de la ÚLTIMA reserva hecha en este navegador (para la página de confirmación). */
 export const BOOKING_COOKIE = "fs_booking";
@@ -9,7 +10,7 @@ export const MANAGE_COOKIE = "fs_manage";
 export function bookingCookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookies(),
     sameSite: "lax" as const,
     path: "/",
     maxAge: 2 * 24 * 3600,
@@ -19,7 +20,7 @@ export function bookingCookieOptions() {
 export function manageCookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookies(),
     sameSite: "lax" as const,
     path: "/",
     maxAge: 30 * 60,

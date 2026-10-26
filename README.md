@@ -1,11 +1,11 @@
-# Facha Style · Plataforma de reservas para barberías
+# Facha & Style · Plataforma de reservas para barberías
 
-Plataforma SaaS (multi-barbería) para **Facha Style, barbería urbana**, preparada para sumar más barberías.
+Plataforma SaaS (multi-barbería) para **Facha & Style, barbería urbana**, preparada para sumar más barberías.
 
 - **Clientes**: reservan **sin cuenta** desde un QR o link → eligen servicio, profesional, día y hora → reciben confirmación por WhatsApp/correo → gestionan su reserva con un enlace seguro. También pueden reservar conversando con el **bot de WhatsApp**.
 - **Equipo**: panel privado con agenda, reservas, clientes (CRM), mensajes, automatizaciones, pagos, reportes, QR, usuarios y permisos. Portal propio para barberos.
 
-> Estado: base funcional verificada (74 tests de integración/unidad + 8 e2e). Las integraciones externas (WhatsApp, Mercado Pago, correo) están implementadas pero **no validadas con credenciales reales**: ver [docs/integrations.md](docs/integrations.md) y [TODO.md](TODO.md).
+> Estado: base funcional verificada (77 tests de integración/unidad + 8 e2e). Las integraciones externas (WhatsApp, Mercado Pago, correo) están implementadas pero **no validadas con credenciales reales**: ver [docs/integrations.md](docs/integrations.md) y [TODO.md](TODO.md).
 
 ## Stack
 
@@ -21,6 +21,37 @@ Plataforma SaaS (multi-barbería) para **Facha Style, barbería urbana**, prepar
 | Tests | Vitest (contra Postgres real) + Playwright | |
 
 Desviaciones del plan original (NestJS, BullMQ/Redis, monorepo pnpm) y su justificación: [docs/architecture.md](docs/architecture.md).
+
+## Demo en 1 comando (Docker)
+
+Solo necesitas [Docker](https://www.docker.com/products/docker-desktop/). Levanta la base de datos, aplica las migraciones, carga datos de demostración y arranca la app compilada en modo producción:
+
+```bash
+docker compose up --build
+```
+
+| Qué | URL |
+|---|---|
+| Página pública de la barbería | http://localhost:8080 |
+| Panel de administración | http://localhost:8080/admin |
+
+**Usuarios de la demo** (solo existen en esta demo local; en un despliegue real se crean con `npm run owner:create`):
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Dueño | `dueno@facha.dev` | `FachaDev2026` |
+| Recepción | `recepcion@facha.dev` | `FachaDev2026` |
+| Barbero (portal propio) | `nico@facha.dev` | `FachaDev2026` |
+
+En la demo (`DEMO_MODE=true`) WhatsApp y el correo se **simulan** (quedan en el registro de mensajes) y los pagos online abren un **simulador** claramente marcado; no se mueve dinero. La app se niega a arrancar con `DEMO_MODE` si `APP_URL` no es local, para que nunca quede activo en producción.
+
+Por defecto la demo solo responde en tu propio computador. Para abrirla desde un celular en la misma red Wi-Fi (y escanear los QR) hay que permitirlo explícitamente; tu IP se pasa solo en la terminal, nunca se guarda en el repo:
+
+```bash
+DEMO_BIND=0.0.0.0 DEMO_APP_URL=http://IP-DE-TU-PC:8080 docker compose up -d
+```
+
+Apagar: `docker compose down` (agrega `-v` para borrar también los datos de la demo).
 
 ## Puesta en marcha local
 

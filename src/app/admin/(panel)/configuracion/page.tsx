@@ -1,17 +1,7 @@
 import { requireAuth } from "@/modules/identity";
 import { getIntegrationStatus, getTenantSettings, listQrCampaigns } from "@/modules/tenancy";
 import { ActionForm } from "@/components/action-form";
-import {
-  Badge,
-  Card,
-  Checkbox,
-  Field,
-  Input,
-  PageHeader,
-  Select,
-  Table,
-  Textarea,
-} from "@/components/ui";
+import { Badge, Card, Checkbox, Field, Input, PageHeader, Select, Table, Textarea } from "@/components/ui";
 import { appUrl } from "@/shared/env";
 import {
   changePasswordAction,
@@ -38,7 +28,7 @@ export default async function SettingsPage() {
       <PageHeader title="Configuración" description={`Página pública: ${appUrl(`/b/${t.slug}`)}`} />
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Barbería y reglas de reserva</h2>
+          <h2 className="mb-4 heading-section">Barbería y reglas de reserva</h2>
           <ActionForm action={saveSettingsAction}>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Nombre">
@@ -122,7 +112,7 @@ export default async function SettingsPage() {
         <div className="space-y-6">
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-lg uppercase tracking-wide">WhatsApp Business (Cloud API)</h2>
+              <h2 className="heading-section">WhatsApp Business (Cloud API)</h2>
               {wa.enabled ? <Badge tone="ok">Activo</Badge> : <Badge>Inactivo</Badge>}
             </div>
             <p className="mb-3 text-xs text-muted">
@@ -153,7 +143,7 @@ export default async function SettingsPage() {
 
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-lg uppercase tracking-wide">Mercado Pago</h2>
+              <h2 className="heading-section">Mercado Pago</h2>
               {mp.enabled ? <Badge tone="ok">Activo</Badge> : <Badge>Inactivo</Badge>}
             </div>
             <p className="mb-3 text-xs text-muted">
@@ -188,7 +178,7 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      <h2 className="mb-3 mt-10 font-display text-xl uppercase tracking-wide">Códigos QR</h2>
+      <h2 className="mb-3 mt-10 heading-section">Códigos QR</h2>
       <p className="mb-4 text-sm text-muted">
         Apuntan a tu página pública con un código de campaña para medir visitas y reservas. No contienen datos
         personales ni dan permisos.
@@ -240,7 +230,7 @@ export default async function SettingsPage() {
 
       <div className="mt-10 grid gap-6 xl:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Mi contraseña</h2>
+          <h2 className="mb-4 heading-section">Mi contraseña</h2>
           <ActionForm action={changePasswordAction} submitLabel="Cambiar contraseña" resetOnSuccess>
             <Field label="Actual">
               <Input name="current" type="password" required autoComplete="current-password" />
@@ -254,7 +244,7 @@ export default async function SettingsPage() {
           </ActionForm>
         </Card>
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Agregar otra barbería</h2>
+          <h2 className="mb-4 heading-section">Agregar otra barbería</h2>
           <p className="mb-3 text-xs text-muted">
             Quedarás como dueño. Sus datos estarán completamente separados de esta.
           </p>

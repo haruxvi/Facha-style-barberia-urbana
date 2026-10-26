@@ -9,6 +9,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Servidor autocontenido para la imagen Docker (Vercel lo ignora).
+  output: "standalone",
   poweredByHeader: false,
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
   experimental: {

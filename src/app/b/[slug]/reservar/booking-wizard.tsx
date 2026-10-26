@@ -25,6 +25,8 @@ interface Props {
   cancellationHours: number;
   branches: Branch[];
   campaign: string | null;
+  /** Servicio elegido desde la carta de la página pública. */
+  initialServiceId?: string | null;
 }
 
 function money(amount: number, currency: string) {
@@ -93,6 +95,26 @@ function newKey() {
 
 const STEPS = ["Servicio", "Profesional", "Fecha y hora", "Tus datos"];
 
+/** Agrupa las horas en mañana / tarde / noche para escanear más rápido (Hick, Miller). */
+function groupByPeriod(slots: Slot[], tz: string) {
+  const hourOf = (iso: string) =>
+    Number(
+      new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "2-digit", hourCycle: "h23" }).format(
+        new Date(iso),
+      ),
+    );
+  const groups = [
+    { label: "Mañana", slots: [] as Slot[] },
+    { label: "Tarde", slots: [] as Slot[] },
+    { label: "Noche", slots: [] as Slot[] },
+  ];
+  for (const s of slots) {
+    const h = hourOf(s.startsAt);
+    groups[h < 12 ? 0 : h < 19 ? 1 : 2]!.slots.push(s);
+  }
+  return groups.filter((g) => g.slots.length > 0);
+}
+
 export function BookingWizard(props: Props) {
   const [branchId, setBranchId] = useState(props.branches[0]?.id ?? "");
   const branch = props.branches.find((b) => b.id === branchId);
@@ -100,7 +122,7 @@ export function BookingWizard(props: Props) {
 
   // Los datos remotos se guardan junto a la clave de la consulta: si la clave cambió, aún se están cargando.
   const [servicesData, setServicesData] = useState<{ branchId: string; services: Service[] } | null>(null);
-  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [serviceId, setServiceId] = useState<string | null>(props.initialServiceId ?? null);
   const [barberId, setBarberId] = useState<string | null | undefined>(undefined); // null = cualquiera
   const [date, setDate] = useState<string | null>(null);
   const [slotsData, setSlotsData] = useState<{ key: string; slots: Slot[] } | null>(null);
@@ -223,17 +245,31 @@ export function BookingWizard(props: Props) {
 
   return (
     <div className="space-y-6">
-      <ol className="flex gap-2 text-xs font-semibold uppercase tracking-wider">
+      <div>
+        <h1 className="heading-page">Reserva tu hora</h1>
+        <p className="mt-1 text-sm text-muted">
+          <span className="sm:hidden">
+            Paso {step + 1} de {STEPS.length} · {STEPS[step]}
+          </span>
+          <span className="hidden sm:inline">Cuatro pasos, sin crear cuenta.</span>
+        </p>
+      </div>
+      {/* Progreso visible (Goal-gradient): cuánto falta para terminar */}
+      <ol className="flex gap-2 text-xs font-medium" aria-label="Progreso de la reserva">
         {STEPS.map((s, i) => (
           <li
             key={s}
+            aria-current={i === step ? "step" : undefined}
             className={cx(
-              "flex-1 border-t-2 pt-2",
-              i <= step ? "border-accent text-ink" : "border-line text-muted",
+              "flex-1 border-t-2 pt-2 transition-colors duration-200",
+              i < step
+                ? "border-accent text-muted"
+                : i === step
+                  ? "border-accent text-ink"
+                  : "border-line text-subtle",
             )}
           >
             <span className="hidden sm:inline">{s}</span>
-            <span className="sm:hidden">{i + 1}</span>
           </li>
         ))}
       </ol>
@@ -242,7 +278,7 @@ export function BookingWizard(props: Props) {
 
       {props.branches.length > 1 && (
         <Card>
-          <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Sucursal</h2>
+          <h2 className="mb-3 heading-section">Sucursal</h2>
           <div className="grid gap-2 sm:grid-cols-2">
             {props.branches.map((b) => (
               <Choice
@@ -292,7 +328,9 @@ export function BookingWizard(props: Props) {
                       {s.durationMinutes} min{s.description ? ` · ${s.description}` : ""}
                     </div>
                   </div>
-                  <div className="font-display text-accent">{money(s.priceAmount, props.currency)}</div>
+                  <div className="font-display text-lg font-semibold tabular-nums text-accent">
+                    {money(s.priceAmount, props.currency)}
+                  </div>
                 </div>
               </Choice>
             ))}
@@ -371,21 +409,34 @@ export function BookingWizard(props: Props) {
                 })}
               </div>
               {!date && <div className="text-sm text-muted">Elige un día para ver las horas libres.</div>}
-              {date && slotsLoading && <div className="text-sm text-muted">Buscando horas libres…</div>}
+              {date && slotsLoading && (
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-6" aria-label="Buscando horas libres">
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <div key={i} className="h-11 animate-pulse rounded-lg bg-surface-2" />
+                  ))}
+                </div>
+              )}
               {date && slots?.length === 0 && (
                 <div className="text-sm text-muted">No quedan horas este día. Prueba con otro.</div>
               )}
               {slots && slots.length > 0 && (
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                  {slots.map((s) => (
-                    <button
-                      key={s.startsAt}
-                      type="button"
-                      onClick={() => setStartsAt(s.startsAt)}
-                      className="rounded-lg border border-line bg-surface-2 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
-                    >
-                      {timeLabel(s.startsAt, tz)}
-                    </button>
+                <div className="space-y-5">
+                  {groupByPeriod(slots, tz).map((g) => (
+                    <div key={g.label}>
+                      <div className="eyebrow mb-2 text-subtle">{g.label}</div>
+                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                        {g.slots.map((s) => (
+                          <button
+                            key={s.startsAt}
+                            type="button"
+                            onClick={() => setStartsAt(s.startsAt)}
+                            className="min-h-11 rounded-lg border border-line bg-surface-2 text-sm font-semibold tabular-nums transition-colors duration-150 hover:border-accent hover:text-accent"
+                          >
+                            {timeLabel(s.startsAt, tz)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -538,7 +589,7 @@ function StepTitle({
           {n}
         </span>
         <div>
-          <h2 className="font-display text-lg uppercase tracking-wide">{title}</h2>
+          <h2 className="heading-section">{title}</h2>
           {done && summary && <div className="text-sm text-muted">{summary}</div>}
         </div>
       </div>

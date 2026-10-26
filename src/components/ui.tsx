@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -5,13 +6,15 @@ export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(" ");
 }
 
+// Altura mínima de 44px: objetivo táctil cómodo (Fitts).
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50";
 const buttonVariants = {
-  primary: "bg-accent text-accent-ink hover:bg-accent-strong",
-  secondary: "border border-line bg-surface-2 text-ink hover:border-muted",
-  ghost: "text-muted hover:text-ink hover:bg-surface-2",
-  danger: "border border-danger/40 bg-danger/10 text-danger hover:bg-danger/20",
+  primary: "bg-accent text-accent-ink shadow-sm shadow-accent/20 hover:bg-accent-strong",
+  secondary: "border border-line bg-surface-2 text-ink hover:border-subtle hover:bg-surface",
+  ghost: "text-muted hover:bg-surface-2 hover:text-ink",
+  // Destructivo sobrio: neutro en reposo, se insinúa el riesgo solo al interactuar.
+  danger: "border border-line bg-transparent text-ink/85 hover:border-danger/60 hover:text-danger",
 };
 
 export type ButtonVariant = keyof typeof buttonVariants;
@@ -44,16 +47,19 @@ export function PageHeader({
   title,
   description,
   actions,
+  eyebrow,
 }: {
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
+  eyebrow?: string;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="font-display text-3xl font-semibold uppercase tracking-wide">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line-soft pb-6">
+      <div className="min-w-0">
+        {eyebrow && <div className="eyebrow mb-2 text-accent">{eyebrow}</div>}
+        <h1 className="heading-page">{title}</h1>
+        {description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -61,7 +67,7 @@ export function PageHeader({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none";
+  "min-h-11 w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink transition-colors duration-150 placeholder:text-subtle hover:border-subtle focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
 
 export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={cx(inputCls, props.className)} />;
@@ -88,7 +94,7 @@ export function Field({
 }) {
   return (
     <label className={cx("block space-y-1.5", className)}>
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</span>
+      <span className="text-sm font-medium text-ink/90">{label}</span>
       {children}
       {hint && <span className="block text-xs text-muted">{hint}</span>}
     </label>
@@ -98,35 +104,70 @@ export function Field({
 export function Checkbox({ label, ...props }: ComponentProps<"input"> & { label: ReactNode }) {
   return (
     <label className="flex cursor-pointer items-start gap-2.5 text-sm">
-      <input type="checkbox" {...props} className="mt-0.5 size-4 accent-[var(--color-accent)]" />
-      <span>{label}</span>
+      <input type="checkbox" {...props} className="mt-0.5 size-4 shrink-0 accent-[var(--color-accent)]" />
+      <span className="leading-relaxed">{label}</span>
     </label>
   );
 }
 
+/*
+ * Estados: etiqueta neutra + punto de color. El color comunica el estado sin teñir toda la pieza,
+ * así una tabla con muchos estados se mantiene sobria y legible.
+ */
 const tones = {
-  neutral: "bg-surface-2 text-muted border-line",
-  ok: "bg-ok/10 text-ok border-ok/30",
-  warn: "bg-warn/10 text-warn border-warn/30",
-  danger: "bg-danger/10 text-danger border-danger/30",
-  info: "bg-info/10 text-info border-info/30",
-  accent: "bg-accent/10 text-accent border-accent/30",
+  neutral: "bg-subtle",
+  ok: "bg-ok",
+  warn: "bg-warn",
+  danger: "bg-danger",
+  info: "bg-info",
+  accent: "bg-accent",
 };
 
-export function Badge({ tone = "neutral", children }: { tone?: keyof typeof tones; children: ReactNode }) {
+export type Tone = keyof typeof tones;
+
+export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span
-      className={cx(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
-        tones[tone],
-      )}
-    >
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-soft bg-surface-2/70 px-2 py-0.5 text-xs font-medium text-ink/85">
+      <span aria-hidden className={cx("size-1.5 shrink-0 rounded-full", tones[tone])} />
       {children}
     </span>
   );
 }
 
-const APPOINTMENT_STATUS: Record<string, { label: string; tone: keyof typeof tones }> = {
+/** Rótulo de canal (sin "píldora"): ícono + texto discreto. */
+export function ChannelLabel({ channel }: { channel: "WHATSAPP" | "EMAIL" | string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
+      {channel === "WHATSAPP" ? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.75}
+          className="size-3.5"
+          aria-hidden
+        >
+          <path d="M20 12a8 8 0 01-11.6 7.1L4 20l1-4.2A8 8 0 1120 12z" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.75}
+          className="size-3.5"
+          aria-hidden
+        >
+          <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+          <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {channel === "WHATSAPP" ? "WhatsApp" : "Correo"}
+    </span>
+  );
+}
+
+const APPOINTMENT_STATUS: Record<string, { label: string; tone: Tone }> = {
   PENDING_PAYMENT: { label: "Pendiente de pago", tone: "warn" },
   CONFIRMED: { label: "Confirmada", tone: "info" },
   CHECKED_IN: { label: "En el local", tone: "accent" },
@@ -141,7 +182,7 @@ export function AppointmentStatusBadge({ status }: { status: string }) {
   return <Badge tone={s.tone}>{s.label}</Badge>;
 }
 
-const PAYMENT_STATUS: Record<string, { label: string; tone: keyof typeof tones }> = {
+const PAYMENT_STATUS: Record<string, { label: string; tone: Tone }> = {
   PENDING: { label: "Pendiente", tone: "warn" },
   IN_PROCESS: { label: "En proceso", tone: "warn" },
   APPROVED: { label: "Aprobado", tone: "ok" },
@@ -156,7 +197,7 @@ export function PaymentStatusBadge({ status }: { status: string }) {
   return <Badge tone={s.tone}>{s.label}</Badge>;
 }
 
-const NOTIFICATION_STATUS: Record<string, { label: string; tone: keyof typeof tones }> = {
+const NOTIFICATION_STATUS: Record<string, { label: string; tone: Tone }> = {
   QUEUED: { label: "En cola", tone: "neutral" },
   SENDING: { label: "Enviando (revisar)", tone: "warn" },
   SENT: { label: "Enviado", tone: "info" },
@@ -174,7 +215,7 @@ export function NotificationStatusBadge({ status }: { status: string }) {
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
+    <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-sm leading-relaxed text-muted">
       {children}
     </div>
   );
@@ -183,9 +224,9 @@ export function EmptyState({ children }: { children: ReactNode }) {
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
     <Card className="p-4">
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</div>
-      <div className="mt-1 font-display text-2xl font-semibold">{value}</div>
-      {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
+      <div className="eyebrow text-muted">{label}</div>
+      <div className="mt-2 font-display text-2xl font-semibold tabular-nums tracking-tight">{value}</div>
+      {hint && <div className="mt-1 text-xs text-subtle">{hint}</div>}
     </Card>
   );
 }
@@ -193,7 +234,7 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 export function Table({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-line">
-      <table className="w-full min-w-[640px] text-left text-sm [&_td]:px-4 [&_td]:py-3 [&_th]:px-4 [&_th]:py-2.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted [&_thead]:bg-surface-2 [&_tbody_tr]:border-t [&_tbody_tr]:border-line">
+      <table className="w-full min-w-[640px] text-left text-sm tabular-nums [&_td]:px-4 [&_td]:py-3.5 [&_th]:px-4 [&_th]:py-3 [&_th]:text-[11px] [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-[0.14em] [&_th]:text-subtle [&_thead]:bg-surface [&_tbody]:bg-bg [&_tbody_tr]:border-t [&_tbody_tr]:border-line-soft [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-surface/60">
         {children}
       </table>
     </div>
@@ -207,31 +248,71 @@ export function Notice({
   tone?: "info" | "warn" | "danger" | "ok";
   children: ReactNode;
 }) {
-  const map = {
-    info: "border-info/30 bg-info/5 text-info",
-    warn: "border-warn/30 bg-warn/5 text-warn",
-    danger: "border-danger/30 bg-danger/5 text-danger",
-    ok: "border-ok/30 bg-ok/5 text-ok",
-  };
-  return <div className={cx("rounded-lg border px-4 py-3 text-sm", map[tone])}>{children}</div>;
+  // Superficie neutra con filete lateral: el tono se lee sin "pintar" el bloque entero.
+  const bar = { info: "border-l-info", warn: "border-l-warn", danger: "border-l-danger", ok: "border-l-ok" };
+  return (
+    <div
+      role={tone === "danger" ? "alert" : undefined}
+      className={cx(
+        "rounded-lg border border-line-soft border-l-2 bg-surface-2/60 px-4 py-3 text-sm leading-relaxed text-ink/90",
+        bar[tone],
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function Logo({ name = "Facha Style", small = false }: { name?: string; small?: boolean }) {
+/** Logo de plataforma (pantallas sin barbería concreta, como el login del equipo). */
+export const PLATFORM_BRAND = { name: "Facha & Style", logoUrl: "/brand/logo-badge.png" };
+
+/**
+ * Marca de una barbería: insignia (si la barbería subió logo) + nombre en serif.
+ * Sin logo se muestra un monograma con la inicial, para que ninguna barbería quede "sin marca".
+ */
+export function Logo({
+  name = PLATFORM_BRAND.name,
+  logoUrl = PLATFORM_BRAND.logoUrl,
+  size = "md",
+  showName = true,
+}: {
+  name?: string;
+  logoUrl?: string | null;
+  size?: "sm" | "md" | "lg" | "xl";
+  showName?: boolean;
+}) {
+  const px = { sm: 32, md: 44, lg: 96, xl: 168 }[size];
   return (
-    <span className="inline-flex items-center gap-2">
-      <svg viewBox="0 0 24 24" className={small ? "size-5" : "size-7"} aria-hidden>
-        <rect x="9" y="1.5" width="6" height="21" rx="3" fill="#f3efe6" />
-        <path d="M9 5l6 3M9 10l6 3M9 15l6 3" stroke="#ef5f57" strokeWidth="1.8" />
-        <path d="M9 7.5l6 3M9 12.5l6 3" stroke="#6aa6ff" strokeWidth="1.2" />
-      </svg>
-      <span
-        className={cx(
-          "font-display font-semibold uppercase tracking-[0.12em]",
-          small ? "text-base" : "text-xl",
-        )}
-      >
-        {name}
-      </span>
+    <span className="inline-flex items-center gap-3">
+      {logoUrl ? (
+        <Image
+          src={logoUrl}
+          alt={showName ? "" : name}
+          width={px}
+          height={px}
+          priority={size === "xl" || size === "lg"}
+          unoptimized={logoUrl.startsWith("http")}
+          className="shrink-0 rounded-full shadow-lg shadow-black/40"
+        />
+      ) : (
+        <span
+          aria-hidden
+          style={{ width: px, height: px }}
+          className="flex shrink-0 items-center justify-center rounded-full border border-accent/50 bg-surface font-display text-accent"
+        >
+          {name.slice(0, 1)}
+        </span>
+      )}
+      {showName && (
+        <span
+          className={cx(
+            "font-display font-semibold tracking-tight",
+            size === "sm" ? "text-base" : size === "md" ? "text-lg" : "text-2xl",
+          )}
+        >
+          {name}
+        </span>
+      )}
     </span>
   );
 }

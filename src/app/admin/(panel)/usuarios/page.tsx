@@ -82,7 +82,7 @@ export default async function UsersPage() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Invitar</h2>
+          <h2 className="mb-4 heading-section">Invitar</h2>
           <ActionForm action={inviteMemberAction} submitLabel="Enviar invitación" resetOnSuccess>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Correo">
@@ -102,7 +102,7 @@ export default async function UsersPage() {
           </ActionForm>
         </Card>
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Invitaciones pendientes</h2>
+          <h2 className="mb-4 heading-section">Invitaciones pendientes</h2>
           {invitations.length === 0 && <p className="text-sm text-muted">No hay invitaciones pendientes.</p>}
           <ul className="divide-y divide-line text-sm">
             {invitations.map((i) => (

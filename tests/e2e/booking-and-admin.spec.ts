@@ -8,8 +8,11 @@ const DEV_OWNER = { email: "dueno@facha.dev", password: "FachaDev2026" };
 
 test("un cliente reserva sin cuenta desde la página pública", async ({ page }) => {
   await page.goto("/b/facha-style?c=tarjeta");
-  await expect(page.getByRole("heading", { name: /tu corte/i })).toBeVisible();
-  await page.getByRole("link", { name: "Reservar ahora" }).click();
+  await expect(page.getByRole("heading", { name: /buenas manos/i })).toBeVisible();
+  await page
+    .getByRole("link", { name: /Reservar hora/ })
+    .first()
+    .click();
 
   await page.getByRole("button", { name: /Perfilado de barba/ }).click();
   await page.getByRole("button", { name: /Cualquier profesional/ }).click();
@@ -19,10 +22,12 @@ test("un cliente reserva sin cuenta desde la página pública", async ({ page })
   let found = false;
   for (let i = 1; i < 8 && !found; i++) {
     await days.nth(i).click();
-    const slot = page.getByRole("button", { name: /^\d{2}:\d{2}$/ }).last();
+    const slots = page.getByRole("button", { name: /^\d{2}:\d{2}$/ });
     try {
-      await slot.waitFor({ timeout: 5000 });
-      await slot.click();
+      await slots.first().waitFor({ timeout: 8000 });
+      // Hueco al azar: corridas repetidas no compiten siempre por la misma hora.
+      const count = await slots.count();
+      await slots.nth(Math.floor(Math.random() * count)).click();
       found = true;
     } catch {
       /* siguiente día */
@@ -37,11 +42,12 @@ test("un cliente reserva sin cuenta desde la página pública", async ({ page })
   await page.getByText("Acepto las condiciones de reserva").click();
   await page.getByRole("button", { name: /Confirmar reserva|Reservar y pagar/ }).click();
 
-  await expect(page).toHaveURL(/\/confirmacion\/|\/pagos\/simulador\//);
+  // En `next dev` la primera compilación de la ruta puede tardar varios segundos.
+  await expect(page).toHaveURL(/\/confirmacion\/|\/pagos\/simulador\//, { timeout: 30_000 });
   if (page.url().includes("/pagos/simulador/")) {
     await page.getByRole("button", { name: "Simular pago aprobado" }).click();
   }
-  await expect(page.getByText("Confirmada")).toBeVisible();
+  await expect(page.getByText("Confirmada")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("Perfilado de barba")).toBeVisible();
 });
 

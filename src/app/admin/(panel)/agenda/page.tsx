@@ -24,14 +24,15 @@ export const metadata = { title: "Agenda" };
 type View = "dia" | "semana" | "mes";
 type SP = { vista?: string; fecha?: string; sucursal?: string; barbero?: string };
 
+// Bloques neutros con filete lateral: el estado se lee sin teñir la agenda completa.
 const STATUS_COLORS: Record<string, string> = {
-  PENDING_PAYMENT: "border-warn/60 bg-warn/15",
-  CONFIRMED: "border-info/60 bg-info/15",
-  CHECKED_IN: "border-accent/70 bg-accent/20",
-  COMPLETED: "border-ok/60 bg-ok/15",
-  CANCELLED: "border-danger/40 bg-danger/10 opacity-60 line-through",
-  NO_SHOW: "border-danger/60 bg-danger/15",
-  EXPIRED: "border-line bg-surface-2 opacity-50",
+  PENDING_PAYMENT: "border-l-warn",
+  CONFIRMED: "border-l-info",
+  CHECKED_IN: "border-l-accent",
+  COMPLETED: "border-l-ok",
+  CANCELLED: "border-l-danger opacity-50 line-through",
+  NO_SHOW: "border-l-danger",
+  EXPIRED: "border-l-line opacity-40",
 };
 
 const START_HOUR = 8;
@@ -170,7 +171,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
 
       {can(ctx.role, "barbers.manage") && (
         <Card className="mt-6">
-          <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Bloquear horario</h2>
+          <h2 className="mb-3 heading-section">Bloquear horario</h2>
           <ActionForm
             action={addExceptionAction}
             submitLabel="Bloquear"
@@ -229,7 +230,7 @@ function ApptBlock({ a, tz, compact = false }: { a: AgendaAppointment; tz: strin
     <Link
       href={`/admin/reservas/${a.id}`}
       className={cx(
-        "block rounded-md border px-2 py-1 text-xs hover:brightness-125",
+        "block rounded-md border border-line-soft border-l-2 bg-surface-2 px-2 py-1 text-xs transition-colors duration-150 hover:bg-surface",
         STATUS_COLORS[a.status],
       )}
     >
@@ -273,10 +274,7 @@ function DayView({
       >
         <div className="border-b border-line" />
         {barbers.map((b) => (
-          <div
-            key={b.id}
-            className="border-b border-l border-line px-3 py-2 font-display text-sm uppercase tracking-wide"
-          >
+          <div key={b.id} className="border-b border-l border-line px-3 py-2 text-sm font-semibold">
             {b.displayName}
           </div>
         ))}
@@ -305,7 +303,7 @@ function DayView({
               .map((ex) => (
                 <div
                   key={ex.id}
-                  className="bg-stripes absolute inset-x-1 rounded-md border border-dashed border-line bg-surface-2/80 px-2 text-[11px] text-muted"
+                  className="bg-brand absolute inset-x-1 rounded-md border border-dashed border-line bg-surface-2/80 px-2 text-[11px] text-muted"
                   style={{ top: top(ex.startsAt), height: Math.max(14, top(ex.endsAt) - top(ex.startsAt)) }}
                 >
                   {ex.reason ?? "Bloqueado"}
@@ -345,7 +343,7 @@ function WeekView({
         const list = appointments.filter((a) => localParts(a.startsAt, tz).date === d);
         return (
           <Card key={d} className="p-3">
-            <div className="mb-2 font-display text-sm uppercase tracking-wide first-letter:uppercase">
+            <div className="mb-2 eyebrow text-muted">
               {formatLocalDate(d, { weekday: "short", day: "numeric", month: "short" })}
             </div>
             <div className="space-y-1.5">
@@ -401,7 +399,7 @@ function MonthView({
           >
             <div className="text-xs text-muted">{parseLocalDate(d).day}</div>
             {counts.get(d) ? (
-              <div className="mt-2 font-display text-xl text-accent">{counts.get(d)}</div>
+              <div className="mt-2 font-display text-xl tabular-nums text-accent">{counts.get(d)}</div>
             ) : null}
           </Link>
         ) : (

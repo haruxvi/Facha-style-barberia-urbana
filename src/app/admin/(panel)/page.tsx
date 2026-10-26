@@ -40,9 +40,24 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Citas de hoy</h2>
+          <h2 className="mb-4 heading-section">Citas de hoy</h2>
           {d.todayList.length === 0 ? (
-            <EmptyState>No hay citas para hoy.</EmptyState>
+            <EmptyState>
+              <p>No hay citas para hoy.</p>
+              <p className="mt-1 text-subtle">
+                {d.upcoming > 0
+                  ? `Tienes ${d.upcoming} citas en los próximos días.`
+                  : "Comparte tu QR para empezar a recibir reservas."}
+              </p>
+              <div className="mt-4 flex justify-center gap-2">
+                <ButtonLink href="/admin/reservas/nueva" variant="secondary">
+                  Crear reserva
+                </ButtonLink>
+                <ButtonLink href="/admin/agenda?vista=semana" variant="ghost">
+                  Ver semana
+                </ButtonLink>
+              </div>
+            </EmptyState>
           ) : (
             <ul className="divide-y divide-line">
               {d.todayList.map((a) => (
@@ -51,7 +66,7 @@ export default async function DashboardPage() {
                     href={`/admin/reservas/${a.id}`}
                     className="flex items-center gap-4 py-3 hover:bg-surface-2/50"
                   >
-                    <span className="w-14 font-display text-lg text-accent">
+                    <span className="w-14 font-display text-lg tabular-nums text-accent">
                       {formatTime(a.startsAt, ctx.timezone)}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -70,7 +85,7 @@ export default async function DashboardPage() {
 
         <div className="space-y-6">
           <Card>
-            <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Ocupación esta semana</h2>
+            <h2 className="mb-4 heading-section">Ocupación esta semana</h2>
             {d.occupancy.length === 0 && <EmptyState>Sin barberos activos.</EmptyState>}
             <ul className="space-y-3">
               {d.occupancy.map((o) => (
@@ -90,7 +105,7 @@ export default async function DashboardPage() {
             </ul>
           </Card>
           <Card>
-            <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Más pedidos (mes)</h2>
+            <h2 className="mb-4 heading-section">Más pedidos (mes)</h2>
             {d.topServices.length === 0 ? (
               <EmptyState>Aún no hay datos este mes.</EmptyState>
             ) : (

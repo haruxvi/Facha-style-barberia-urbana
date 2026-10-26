@@ -14,6 +14,8 @@ export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   timeout: 60_000,
   fullyParallel: false,
+  // Un solo worker: los proyectos (escritorio/móvil) reservan contra la misma agenda.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {
@@ -25,10 +27,13 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], ...browser } },
     { name: "mobile", use: { ...devices["Pixel 7"], ...browser } },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000/api/health",
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  // Con E2E_BASE_URL (p. ej. la demo Docker en :8080) se prueba esa instancia; si no, levanta `npm run dev`.
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: "npm run dev",
+        url: "http://localhost:3000/api/health",
+        reuseExistingServer: true,
+        timeout: 120_000,
+      },
 });

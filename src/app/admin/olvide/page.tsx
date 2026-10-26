@@ -8,7 +8,7 @@ export const metadata = { title: "Recuperar contraseña" };
 
 export default function ForgotPage() {
   return (
-    <AuthShell title="Recuperar contraseña">
+    <AuthShell title="Recuperar contraseña" subtitle="Te enviaremos un enlace para crear una nueva.">
       <ActionForm action={forgotPasswordAction} submitLabel="Enviar enlace" resetOnSuccess>
         <Field label="Correo">
           <Input name="email" type="email" required autoComplete="username" />

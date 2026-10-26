@@ -105,7 +105,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
               <input type="hidden" name="barberId" value={barberId} />
               <input type="hidden" name="idempotencyKey" value={randomUUID()} />
               <div>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Hora</div>
+                <div className="mb-2 text-sm font-medium text-ink/90">Hora</div>
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
                   {slots.map((s, i) => (
                     <label key={s.startsAt.toISOString()} className="cursor-pointer">

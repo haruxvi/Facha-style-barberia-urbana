@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────────────────────────
+# DEMO LOCAL de Facha & Style — cualquiera puede levantarla con:
+#
+#   docker compose up --build
+#
+# y abrir http://localhost:8080 (página pública) y http://localhost:8080/admin (panel).
+#
+# ⚠️ Solo para demostración: los secretos de abajo son públicos y DEMO_MODE activa simuladores
+# (WhatsApp, correo y pagos). La app se niega a arrancar con DEMO_MODE si APP_URL no es local.
+# Para producción real ver docs/deployment.md (Vercel + Supabase).
+#
+# Por defecto solo responde en este computador (127.0.0.1). Para probar desde un celular en la misma red
+# Wi-Fi hay que abrirla a la red de forma explícita (ver "ports" del servicio web).
+# ─────────────────────────────────────────────────────────────
+name: facha-style-demo
+
+x-app-env: &app-env
+  # Variable propia (no APP_URL): el .env de desarrollo del proyecto no la pisa al interpolar.
+  APP_URL: ${DEMO_APP_URL:-http://localhost:8080}
+  DATABASE_URL: postgresql://facha:demo_password@db:5432/facha_demo
+  DEMO_MODE: "true"
+  PAYMENTS_FAKE_ENABLED: "true"
+  EMAIL_PROVIDER: console
+  DEFAULT_PUBLIC_SLUG: facha-style
+  # Secretos SOLO DE DEMO (públicos en el repo). Nunca reutilizarlos en un entorno real.
+  SESSION_SECRET: demo-only-session-secret-change-me-0123456789
+  ENCRYPTION_KEY: ZGVtby1vbmx5LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGU=
+  CRON_SECRET: demo-only-cron-secret-0123
+  WHATSAPP_VERIFY_TOKEN: demo-only-verify-token
+  WHATSAPP_APP_SECRET: demo-only-whatsapp-app-secret
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: facha
+      POSTGRES_PASSWORD: demo_password
+      POSTGRES_DB: facha_demo
+    volumes:
+      - demo-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facha -d facha_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Aplica las migraciones versionadas y carga datos de DEMO (idempotente: no duplica si ya existen).
+  migrate:
+    build:
+      context: .
+      target: builder
+    environment:
+      <<: *app-env
+      NODE_ENV: development
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    build:
+      context: .
+      target: runner
+    image: facha-style:demo
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+    ports:
+      # Por defecto solo en este computador. Para abrirla a tu red local (celulares en el mismo Wi-Fi):
+      #   DEMO_BIND=0.0.0.0 DEMO_APP_URL=http://<IP-de-tu-PC>:8080 docker compose up -d
+      - "${DEMO_BIND:-127.0.0.1}:8080:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Equivalente local de Vercel Cron: procesa la cola (confirmaciones, recordatorios) cada minuto.
+  cron:
+    image: facha-style:demo
+    pull_policy: never
+    restart: unless-stopped
+    # Reutiliza la imagen de la web, pero no sirve HTTP: su chequeo de salud no aplica.
+    healthcheck:
+      disable: true
+    environment:
+      <<: *app-env
+    command:
+      - node
+      - -e
+      - >-
+        const run = () => fetch('http://web:3000/api/cron/jobs', { headers: { Authorization: 'Bearer ' + process.env.CRON_SECRET } })
+        .then(r => console.log(new Date().toISOString(), 'cron', r.status)).catch(e => console.log('cron error', e.message));
+        setInterval(run, 60000); setTimeout(run, 5000);
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  demo-pgdata:

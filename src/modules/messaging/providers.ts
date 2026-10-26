@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getIntegration } from "@/modules/tenancy";
-import { env, isProduction } from "@/shared/env";
+import { env, simulatorsAllowed } from "@/shared/env";
 import { AppError } from "@/shared/errors";
 import { logger, maskEmail, maskPhone } from "@/shared/logger";
 import { e164ToWaId } from "@/shared/phone";
@@ -191,7 +191,7 @@ export function getEmailProvider(): EmailProvider {
     if (!e.EMAIL_API_KEY) throw new AppError("CONFIG", "Falta EMAIL_API_KEY para Resend");
     return new ResendEmailProvider(e.EMAIL_API_KEY, e.EMAIL_FROM);
   }
-  if (isProduction()) logger.warn("email.console_in_production");
+  if (!simulatorsAllowed()) logger.warn("email.console_in_production");
   return new ConsoleEmailProvider();
 }
 
@@ -202,6 +202,6 @@ export async function getWhatsAppSender(tenantId: string): Promise<WhatsAppSende
   if (integration?.enabled && integration.externalAccountId && token) {
     return new CloudApiWhatsAppSender(integration.externalAccountId, token);
   }
-  if (!isProduction()) return new ConsoleWhatsAppSender();
+  if (simulatorsAllowed()) return new ConsoleWhatsAppSender();
   throw new AppError("CONFIG", "WhatsApp no está configurado para esta barbería");
 }

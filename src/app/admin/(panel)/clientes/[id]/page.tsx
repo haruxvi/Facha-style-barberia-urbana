@@ -52,22 +52,22 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-3">
             <Card className="p-4">
-              <div className="text-xs uppercase text-muted">Visitas</div>
+              <div className="eyebrow text-subtle">Visitas</div>
               <div className="font-display text-2xl">{c.visitCount}</div>
             </Card>
             <Card className="p-4">
-              <div className="text-xs uppercase text-muted">Frecuencia</div>
+              <div className="eyebrow text-subtle">Frecuencia</div>
               <div className="font-display text-2xl">
                 {c.stats.avgDaysBetween ? `${c.stats.avgDaysBetween} d` : "—"}
               </div>
             </Card>
             <Card className="p-4">
-              <div className="text-xs uppercase text-muted">Ausencias</div>
+              <div className="eyebrow text-subtle">Ausencias</div>
               <div className="font-display text-2xl">{c.noShowCount}</div>
             </Card>
           </div>
           <Card>
-            <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Historial de reservas</h2>
+            <h2 className="mb-3 heading-section">Historial de reservas</h2>
             <ul className="divide-y divide-line text-sm">
               {c.appointments.map((a) => (
                 <li key={a.id}>
@@ -91,7 +91,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </Card>
           {can(ctx.role, "messages.send") && (
             <Card>
-              <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Enviar mensaje</h2>
+              <h2 className="mb-3 heading-section">Enviar mensaje</h2>
               <ActionForm action={sendManualMessageAction} submitLabel="Enviar" resetOnSuccess>
                 <input type="hidden" name="customerId" value={c.id} />
                 <div className="flex gap-4 text-sm">
@@ -110,7 +110,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
         <div className="space-y-6">
           <Card>
-            <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Comunicaciones</h2>
+            <h2 className="mb-3 heading-section">Comunicaciones</h2>
             <p className="mb-3 text-xs text-muted">
               Cada canal y finalidad se registra por separado y se puede revocar en cualquier momento.
             </p>
@@ -148,7 +148,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </Card>
           {canManage && (
             <Card>
-              <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Ficha</h2>
+              <h2 className="mb-3 heading-section">Ficha</h2>
               <ActionForm action={updateCustomerAction}>
                 <input type="hidden" name="customerId" value={c.id} />
                 <Field label="Nombre">
@@ -171,7 +171,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </Card>
           )}
           <Card>
-            <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Mensajes recientes</h2>
+            <h2 className="mb-3 heading-section">Mensajes recientes</h2>
             <ul className="space-y-2 text-sm">
               {c.notifications.length === 0 && <li className="text-muted">Sin mensajes.</li>}
               {c.notifications.map((n) => (
@@ -184,9 +184,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </Card>
           {canManage && (
             <Card className="border-danger/30">
-              <h2 className="mb-2 font-display text-lg uppercase tracking-wide text-danger">
-                Suprimir datos
-              </h2>
+              <h2 className="mb-2 heading-section text-danger">Suprimir datos</h2>
               <p className="mb-3 text-xs text-muted">
                 Anonimiza nombre, teléfono, correo y mensajes. Las citas se conservan sin datos personales
                 para la contabilidad. No se puede deshacer.

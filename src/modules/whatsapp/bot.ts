@@ -92,10 +92,10 @@ const NO = new RegExp(`^(no|cancelar|anular)${END}`, "i");
 
 function menu(ports: BotPorts): string {
   return [
-    `¡Hola! 👋 Soy el asistente de *${ports.tenantName}*. Responde con un número:`,
-    "1️⃣ Reservar una hora",
-    "2️⃣ Ver, cambiar o cancelar mis reservas",
-    "3️⃣ Hablar con una persona",
+    `Hola, soy el asistente de reservas de *${ports.tenantName}*. Responde con un número:`,
+    "1. Reservar una hora",
+    "2. Ver, cambiar o cancelar mis reservas",
+    "3. Hablar con una persona",
   ].join("\n");
 }
 
@@ -112,7 +112,7 @@ function pick(text: string, max: number, allowZero = false): number | null {
 }
 
 const NOT_UNDERSTOOD =
-  "No te entendí 🤔. Responde con el *número* de una opción o escribe *MENU* para volver al inicio.";
+  "No te entendí. Responde con el *número* de una opción o escribe *MENU* para volver al inicio.";
 
 export async function handleBotMessage(
   state: BotState,
@@ -135,7 +135,7 @@ export async function handleBotMessage(
   }
   if (HUMAN_WORDS.test(text) || (state === "idle" && text === "3")) {
     return {
-      replies: ["Te comunico con una persona del equipo 🙌. Te responderemos por aquí lo antes posible."],
+      replies: ["Te comunico con una persona del equipo. Te responderemos por aquí lo antes posible."],
       state: "idle",
       context: {},
       handoff: true,
@@ -238,7 +238,7 @@ export async function handleBotMessage(
     case "name": {
       const name = text.replace(/\s+/g, " ").slice(0, 80);
       if (name.length < 2 || /^\d+$/.test(name))
-        return { replies: ["Escríbeme tu nombre, por favor 🙂"], state, context };
+        return { replies: ["Escríbeme tu nombre, por favor."], state, context };
       return confirmStep(ports, { ...context, name });
     }
 
@@ -258,7 +258,7 @@ export async function handleBotMessage(
       if (!r.ok) {
         if (r.reason === "slot_unavailable") {
           const retry = await askTime(ports, { ...context, startsAt: undefined });
-          return { ...retry, replies: ["Ups, ese horario se acaba de ocupar 😕.", ...retry.replies] };
+          return { ...retry, replies: ["Ese horario se acaba de ocupar.", ...retry.replies] };
         }
         return {
           replies: [`No pude crear la reserva: ${r.message}`, menu(ports)],
@@ -277,7 +277,7 @@ export async function handleBotMessage(
       }
       return {
         replies: [
-          `✅ ¡Reserva confirmada!\n${context.serviceName} con ${context.barberName}\n${ports.formatSlot(new Date(context.startsAt!))}\n\nPara ver, cambiar o cancelar: ${r.manageUrl}`,
+          `Reserva confirmada.\n${context.serviceName} con ${context.barberName}\n${ports.formatSlot(new Date(context.startsAt!))}\n\nPara ver, cambiar o cancelar: ${r.manageUrl}`,
         ],
         state: "idle",
         context: {},
@@ -327,7 +327,7 @@ async function askDate(ports: BotPorts, ctx: BotContext): Promise<BotResult> {
   if (dates.length === 0) {
     return {
       replies: [
-        "No encontré horas disponibles en los próximos días 😕. Escribe *3* para hablar con una persona.",
+        "No encontré horas disponibles en los próximos días. Escribe *3* para hablar con una persona.",
       ],
       state: "idle",
       context: {},

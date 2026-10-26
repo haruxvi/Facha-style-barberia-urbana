@@ -49,7 +49,7 @@ export default async function BarbersPage() {
       </Table>
 
       <Card className="mt-6">
-        <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Nuevo barbero</h2>
+        <h2 className="mb-4 heading-section">Nuevo barbero</h2>
         <ActionForm action={saveBarberAction} submitLabel="Crear y configurar horario">
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label="Nombre visible">
@@ -64,17 +64,13 @@ export default async function BarbersPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <fieldset className="space-y-1.5">
-              <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                Sucursales
-              </legend>
+              <legend className="mb-2 text-sm font-medium text-ink/90">Sucursales</legend>
               {branches.map((b) => (
                 <Checkbox key={b.id} name="branchIds" value={b.id} defaultChecked label={b.name} />
               ))}
             </fieldset>
             <fieldset className="space-y-1.5">
-              <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                Servicios que realiza
-              </legend>
+              <legend className="mb-2 text-sm font-medium text-ink/90">Servicios que realiza</legend>
               {services.map((s) => (
                 <Checkbox key={s.id} name="serviceIds" value={s.id} defaultChecked label={s.name} />
               ))}

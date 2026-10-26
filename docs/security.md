@@ -25,11 +25,20 @@
 | Consentimiento | Por canal (WhatsApp/correo) y finalidad (reservas/promociones), revocable (panel, "BAJA" por WhatsApp, enlace de baja por correo); se revalida al enviar |
 | Derechos sobre los datos | Exportación JSON por cliente y anonimización (conserva citas sin datos personales) |
 
+## Modo demo local (`DEMO_MODE`)
+
+Lo usa `docker-compose.yml` para mostrar la app compilada en producción sobre `http://localhost`. Activa: cookies sin `Secure` (necesario en http), WhatsApp/correo simulados y el simulador de pagos.
+
+Salvaguardas:
+- La app **no arranca** si `DEMO_MODE=true` y `APP_URL` no es local (localhost, `*.local` o IP privada 10/172.16/192.168). Un despliegue público con esa variable falla al iniciar.
+- Los secretos del compose son públicos a propósito y solo sirven para la demo; nunca reutilizarlos.
+- Vercel/producción: no definir `DEMO_MODE` ni `PAYMENTS_FAKE_ENABLED`.
+
 ## Checklist antes de producción
 
 - [ ] `SESSION_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET` generados al azar y **distintos** en Preview y Production.
 - [ ] `APP_URL` con `https://` y dominio definitivo.
-- [ ] `PAYMENTS_FAKE_ENABLED` vacío (el simulador además está bloqueado si `NODE_ENV=production`).
+- [ ] `PAYMENTS_FAKE_ENABLED` y `DEMO_MODE` sin definir (el simulador además está bloqueado en producción salvo la demo local).
 - [ ] Primer dueño creado con `npm run owner:create` (nunca con el seed).
 - [ ] Supabase: contraseña de BD fuerte, backups activos (PITR si el plan lo permite), "Network restrictions" si aplica.
 - [ ] Webhooks de Meta y Mercado Pago apuntando a producción, con sus secretos.

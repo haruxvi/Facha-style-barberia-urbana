@@ -103,6 +103,7 @@ export function ctxFor(
     tenantId: t.id,
     tenantSlug: t.slug,
     tenantName: t.name,
+    tenantLogoUrl: null,
     timezone: t.timezone,
     currency: t.currency,
     role,

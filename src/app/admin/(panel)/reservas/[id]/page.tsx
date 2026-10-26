@@ -108,7 +108,7 @@ export default async function AppointmentDetailPage({
           </Card>
 
           <Card className="space-y-3">
-            <h2 className="font-display text-lg uppercase tracking-wide">Acciones</h2>
+            <h2 className="heading-section">Acciones</h2>
             <div className="flex flex-wrap gap-2">
               {a.status === "PENDING_PAYMENT" && manage && (
                 <Transition id={a.id} name="confirm" label="Confirmar (pago en local)" variant="primary" />
@@ -148,7 +148,7 @@ export default async function AppointmentDetailPage({
 
           {manage && a.status === "CONFIRMED" && (
             <Card className="space-y-3">
-              <h2 className="font-display text-lg uppercase tracking-wide">Reprogramar</h2>
+              <h2 className="heading-section">Reprogramar</h2>
               <form className="flex items-end gap-2">
                 <Field label="Nueva fecha">
                   <Input
@@ -190,7 +190,7 @@ export default async function AppointmentDetailPage({
 
           {can(ctx.role, "messages.send") && (
             <Card className="space-y-3">
-              <h2 className="font-display text-lg uppercase tracking-wide">Enviar mensaje</h2>
+              <h2 className="heading-section">Enviar mensaje</h2>
               <ActionForm action={sendManualMessageAction} submitLabel="Enviar" resetOnSuccess>
                 <input type="hidden" name="customerId" value={a.customer.id} />
                 <input type="hidden" name="appointmentId" value={a.id} />
@@ -217,7 +217,7 @@ export default async function AppointmentDetailPage({
         <div className="space-y-6">
           {a.payments.length > 0 && (
             <Card>
-              <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Pagos</h2>
+              <h2 className="mb-3 heading-section">Pagos</h2>
               <ul className="space-y-2 text-sm">
                 {a.payments.map((p) => (
                   <li key={p.id} className="flex items-center justify-between gap-2">
@@ -232,7 +232,7 @@ export default async function AppointmentDetailPage({
             </Card>
           )}
           <Card>
-            <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Mensajes</h2>
+            <h2 className="mb-3 heading-section">Mensajes</h2>
             {a.notifications.length === 0 && <p className="text-sm text-muted">Sin mensajes.</p>}
             <ul className="space-y-2 text-sm">
               {a.notifications.map((n) => (
@@ -247,7 +247,7 @@ export default async function AppointmentDetailPage({
             </ul>
           </Card>
           <Card>
-            <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Historial</h2>
+            <h2 className="mb-3 heading-section">Historial</h2>
             <ol className="space-y-2 text-sm">
               {a.events.map((e) => (
                 <li key={e.id} className="flex justify-between gap-2">
@@ -259,7 +259,7 @@ export default async function AppointmentDetailPage({
           </Card>
           {manage && (
             <Card className="space-y-2">
-              <h2 className="font-display text-lg uppercase tracking-wide">Enlace del cliente</h2>
+              <h2 className="heading-section">Enlace del cliente</h2>
               <p className="text-xs text-muted">
                 Si el cliente compartió su enlace de gestión por error, revócalo: los próximos mensajes
                 llevarán uno nuevo.
@@ -310,7 +310,7 @@ function Transition({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wider text-muted">{label}</dt>
+      <dt className="eyebrow text-subtle">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
   );

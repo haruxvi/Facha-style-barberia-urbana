@@ -59,7 +59,7 @@ export default async function ReportsPage({
       </div>
 
       <Card className="mt-6">
-        <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Ingresos por día</h2>
+        <h2 className="mb-4 heading-section">Ingresos por día</h2>
         <div className="flex h-40 items-end gap-1">
           {r.byDay.map((d) => (
             <div
@@ -78,7 +78,7 @@ export default async function ReportsPage({
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <div>
-          <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Barberos y comisiones</h2>
+          <h2 className="mb-3 heading-section">Barberos y comisiones</h2>
           <Table>
             <thead>
               <tr>
@@ -106,7 +106,7 @@ export default async function ReportsPage({
           </Table>
         </div>
         <div>
-          <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Servicios</h2>
+          <h2 className="mb-3 heading-section">Servicios</h2>
           <Table>
             <thead>
               <tr>
@@ -127,7 +127,7 @@ export default async function ReportsPage({
           </Table>
         </div>
         <div>
-          <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Ocupación</h2>
+          <h2 className="mb-3 heading-section">Ocupación</h2>
           <Table>
             <thead>
               <tr>
@@ -150,7 +150,7 @@ export default async function ReportsPage({
           </Table>
         </div>
         <div>
-          <h2 className="mb-3 font-display text-lg uppercase tracking-wide">Campañas QR</h2>
+          <h2 className="mb-3 heading-section">Campañas QR</h2>
           <Table>
             <thead>
               <tr>

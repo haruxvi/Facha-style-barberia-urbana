@@ -2,7 +2,17 @@ import { listAutomationRules } from "@/modules/automation";
 import { requireAuth } from "@/modules/identity";
 import { listTemplates, previewTemplate, TEMPLATE_VARIABLES } from "@/modules/messaging";
 import { ActionForm } from "@/components/action-form";
-import { Badge, Card, Checkbox, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  ChannelLabel,
+  Checkbox,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  Textarea,
+} from "@/components/ui";
 import { saveTemplateAction, updateRuleAction } from "../../actions";
 
 export const metadata = { title: "Automatizaciones" };
@@ -54,9 +64,7 @@ export default async function AutomationsPage() {
                 <div className="min-w-56 flex-1">
                   <div className="font-semibold">{meta.label}</div>
                   <div className="mt-1">
-                    <Badge tone={r.channel === "WHATSAPP" ? "ok" : "info"}>
-                      {r.channel === "WHATSAPP" ? "WhatsApp" : "Correo"}
-                    </Badge>
+                    <ChannelLabel channel={r.channel} />
                   </div>
                 </div>
                 <Checkbox name="active" defaultChecked={r.active} label="Activa" />
@@ -90,7 +98,7 @@ export default async function AutomationsPage() {
         })}
       </div>
 
-      <h2 className="mb-3 mt-10 font-display text-xl uppercase tracking-wide">Plantillas</h2>
+      <h2 className="mb-3 mt-10 heading-section">Plantillas</h2>
       <p className="mb-4 text-sm text-muted">
         Variables: {TEMPLATE_VARIABLES.map((v) => `{{${v}}}`).join(" ")}. Para WhatsApp fuera de la ventana de
         24 h indica el nombre de la plantilla aprobada en Meta: sus parámetros se envían en el orden en que
@@ -104,15 +112,13 @@ export default async function AutomationsPage() {
                 <span className="font-medium">{t.name}</span>{" "}
                 <span className="text-xs text-muted">({t.key})</span>
               </span>
-              <span className="flex gap-2">
-                <Badge tone={t.channel === "WHATSAPP" ? "ok" : "info"}>
-                  {t.channel === "WHATSAPP" ? "WhatsApp" : "Correo"}
-                </Badge>
+              <span className="flex items-center gap-4">
+                <ChannelLabel channel={t.channel} />
                 {t.channel === "WHATSAPP" &&
                   (t.waTemplateName ? (
-                    <Badge tone="accent">Meta: {t.waTemplateName}</Badge>
+                    <Badge tone="ok">Aprobada en Meta</Badge>
                   ) : (
-                    <Badge tone="warn">Sin plantilla Meta</Badge>
+                    <Badge tone="warn">Falta plantilla de Meta</Badge>
                   ))}
               </span>
             </summary>
@@ -150,9 +156,7 @@ export default async function AutomationsPage() {
                 <Checkbox name="active" defaultChecked={t.active} label="Activa" />
               </ActionForm>
               <div className="rounded-lg bg-surface-2 p-3 text-sm">
-                <div className="mb-1 text-xs uppercase tracking-wider text-muted">
-                  Vista previa (datos de ejemplo)
-                </div>
+                <div className="eyebrow mb-2 text-subtle">Vista previa (datos de ejemplo)</div>
                 {previewTemplate(t.body)}
               </div>
             </div>

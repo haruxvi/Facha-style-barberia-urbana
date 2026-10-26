@@ -48,7 +48,7 @@ export default async function FakeCheckoutPage({ params }: { params: Promise<{ p
         <div>
           <div className="text-sm text-muted">{payment.appointment.tenant.name}</div>
           <div className="font-semibold">{payment.appointment.serviceName}</div>
-          <div className="font-display text-3xl text-accent">
+          <div className="font-display text-3xl tabular-nums text-accent">
             {formatMoney(payment.amount, payment.currency)}
           </div>
         </div>
@@ -56,7 +56,7 @@ export default async function FakeCheckoutPage({ params }: { params: Promise<{ p
           <Button name="status" value="approved" className="flex-1">
             Simular pago aprobado
           </Button>
-          <Button name="status" value="rejected" variant="danger" className="flex-1">
+          <Button name="status" value="rejected" variant="secondary" className="flex-1">
             Simular rechazo
           </Button>
         </form>

@@ -29,9 +29,9 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
   if (!access || access.tenantId !== tenant.id) {
     // Sin el token de esta reserva no mostramos ningún dato (el id por sí solo no da acceso).
     return (
-      <Shell name={tenant.name}>
+      <Shell name={tenant.name} logoUrl={tenant.logoUrl}>
         <Card>
-          <h1 className="font-display text-2xl uppercase">Reserva registrada</h1>
+          <h1 className="heading-page">Reserva registrada</h1>
           <p className="mt-2 text-sm text-muted">
             Revisa tu WhatsApp o correo: ahí tienes el enlace para ver, cambiar o cancelar tu reserva.
           </p>
@@ -58,18 +58,18 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
   const tz = appt.branch.timezone;
 
   return (
-    <Shell name={tenant.name}>
+    <Shell name={tenant.name} logoUrl={tenant.logoUrl}>
       <Card className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-semibold uppercase">
+            <h1 className="heading-page">
               {appt.status === "CONFIRMED"
                 ? "¡Te esperamos!"
                 : appt.status === "PENDING_PAYMENT"
                   ? "Falta el pago"
                   : "Tu reserva"}
             </h1>
-            <p className="text-sm text-muted">Hola {appt.customer.name.split(" ")[0]} 👋</p>
+            <p className="text-sm text-muted">Hola, {appt.customer.name.split(" ")[0]}.</p>
           </div>
           <AppointmentStatusBadge status={appt.status} />
         </div>
@@ -120,7 +120,8 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
         )}
         {appt.status === "CONFIRMED" && (
           <Notice tone="ok">
-            Te enviamos la confirmación por WhatsApp (si lo aceptaste). Llega 5 minutos antes 💈
+            Te enviamos la confirmación por WhatsApp (si lo aceptaste). Te recomendamos llegar 5 minutos
+            antes.
           </Notice>
         )}
 
@@ -140,18 +141,26 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wider text-muted">{label}</dt>
+      <dt className="eyebrow text-subtle">{label}</dt>
       <dd className="font-medium first-letter:uppercase">{value}</dd>
     </div>
   );
 }
 
-function Shell({ name, children }: { name: string; children: React.ReactNode }) {
+function Shell({
+  name,
+  logoUrl,
+  children,
+}: {
+  name: string;
+  logoUrl: string | null;
+  children: React.ReactNode;
+}) {
   return (
-    <main className="bg-stripes min-h-dvh">
+    <main className="bg-brand min-h-dvh">
       <div className="mx-auto max-w-xl px-4 py-10">
         <div className="mb-6">
-          <Logo name={name} small />
+          <Logo name={name} logoUrl={logoUrl} size="md" />
         </div>
         {children}
       </div>

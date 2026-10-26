@@ -30,9 +30,19 @@ const schema = z
     EMAIL_FROM: z.string().default("Facha Style <reservas@example.com>"),
 
     PAYMENTS_FAKE_ENABLED: optional,
+    // Demo local (Docker): http, cookies sin Secure y proveedores simulados. Solo con URLs locales.
+    DEMO_MODE: optional,
   })
   .superRefine((env, ctx) => {
-    if (env.NODE_ENV === "production") {
+    const demo = env.DEMO_MODE === "true";
+    if (demo && !isLocalUrl(env.APP_URL)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["DEMO_MODE"],
+        message: "DEMO_MODE solo se permite con APP_URL local (localhost o IP de red privada)",
+      });
+    }
+    if (env.NODE_ENV === "production" && !demo) {
       if (!env.APP_URL.startsWith("https://")) {
         ctx.addIssue({ code: "custom", path: ["APP_URL"], message: "En producción APP_URL debe ser https" });
       }
@@ -43,6 +53,22 @@ const schema = z
   });
 
 export type Env = z.infer<typeof schema>;
+
+/** localhost, *.local, *.localhost o IP privada (10/8, 172.16/12, 192.168/16). */
+export function isLocalUrl(url: string): boolean {
+  let host: string;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    return false;
+  }
+  if (host === "localhost" || host === "127.0.0.1" || host === "[::1]") return true;
+  if (host.endsWith(".localhost") || host.endsWith(".local")) return true;
+  const m = /^(\d+)\.(\d+)\.\d+\.\d+$/.exec(host);
+  if (!m) return false;
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  return a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+}
 
 let cached: Env | undefined;
 
@@ -63,10 +89,27 @@ export function isProduction(): boolean {
   return env().NODE_ENV === "production";
 }
 
-/** El proveedor de pagos simulado NUNCA está disponible en producción. */
+/** Demo local: validado al arrancar para que solo funcione con URLs locales. */
+export function demoMode(): boolean {
+  return env().DEMO_MODE === "true";
+}
+
+/** Se permiten simuladores (WhatsApp/correo/pagos) en desarrollo, tests o la demo local. */
+export function simulatorsAllowed(): boolean {
+  return !isProduction() || demoMode();
+}
+
+/**
+ * Cookies con Secure y prefijo __Host- en producción real. Se lee de process.env directamente
+ * porque también lo usa el proxy (que no debe cargar toda la validación).
+ */
+export function secureCookies(): boolean {
+  return process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true";
+}
+
+/** El proveedor de pagos simulado NUNCA está disponible en producción real (sí en la demo local). */
 export function fakePaymentsEnabled(): boolean {
-  const e = env();
-  return e.NODE_ENV !== "production" && e.PAYMENTS_FAKE_ENABLED === "true";
+  return simulatorsAllowed() && env().PAYMENTS_FAKE_ENABLED === "true";
 }
 
 export function appUrl(path = ""): string {

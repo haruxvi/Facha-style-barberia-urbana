@@ -38,7 +38,7 @@ export default async function BarberDetailPage({ params }: { params: Promise<{ i
       />
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-display text-lg uppercase tracking-wide">Perfil</h2>
+          <h2 className="mb-4 heading-section">Perfil</h2>
           <ActionForm action={saveBarberAction}>
             <input type="hidden" name="id" value={barber.id} />
             <div className="grid gap-3 sm:grid-cols-2">
@@ -64,9 +64,7 @@ export default async function BarberDetailPage({ params }: { params: Promise<{ i
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <fieldset className="space-y-1.5">
-                <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                  Sucursales
-                </legend>
+                <legend className="mb-2 text-sm font-medium text-ink/90">Sucursales</legend>
                 {branches.map((b) => (
                   <Checkbox
                     key={b.id}
@@ -78,9 +76,7 @@ export default async function BarberDetailPage({ params }: { params: Promise<{ i
                 ))}
               </fieldset>
               <fieldset className="space-y-1.5">
-                <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
-                  Servicios
-                </legend>
+                <legend className="mb-2 text-sm font-medium text-ink/90">Servicios</legend>
                 {services.map((s) => (
                   <Checkbox
                     key={s.id}
@@ -101,7 +97,7 @@ export default async function BarberDetailPage({ params }: { params: Promise<{ i
             const rows = hours.filter((h) => h.branchId === branch.id);
             return (
               <Card key={branch.id}>
-                <h2 className="mb-1 font-display text-lg uppercase tracking-wide">Horario · {branch.name}</h2>
+                <h2 className="mb-1 heading-section">Horario · {branch.name}</h2>
                 <p className="mb-4 text-xs text-muted">
                   Hora local de la sucursal ({branch.timezone}). Usa la segunda franja para modelar la pausa
                   de almuerzo. Deja vacío los días libres.
@@ -151,9 +147,7 @@ export default async function BarberDetailPage({ params }: { params: Promise<{ i
           )}
 
           <Card>
-            <h2 className="mb-4 font-display text-lg uppercase tracking-wide">
-              Vacaciones, ausencias y horas extra
-            </h2>
+            <h2 className="mb-4 heading-section">Vacaciones, ausencias y horas extra</h2>
             <ActionForm action={addExceptionAction} submitLabel="Agregar" resetOnSuccess>
               <input type="hidden" name="barberId" value={barber.id} />
               <div className="grid gap-3 sm:grid-cols-3">

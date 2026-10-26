@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { secureCookies } from "@/shared/env";
 import { forbidden } from "@/shared/errors";
 import { resolveSession, type AuthContext } from "./auth-service";
 import { can, type Permission } from "./rbac";
@@ -9,7 +10,7 @@ import { can, type Permission } from "./rbac";
  * Adaptador Next.js de la sesión administrativa: cookie HttpOnly, SameSite=Lax y Secure en producción.
  * En producción se usa el prefijo __Host- (obliga a Secure, Path=/ y sin Domain).
  */
-export const SESSION_COOKIE = process.env.NODE_ENV === "production" ? "__Host-fs_session" : "fs_session";
+export const SESSION_COOKIE = secureCookies() ? "__Host-fs_session" : "fs_session";
 
 export const getAuth = cache(async (): Promise<AuthContext | null> => {
   const store = await cookies();
@@ -36,7 +37,7 @@ export async function setSessionCookie(token: string, expiresAt: Date): Promise<
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookies(),
     sameSite: "lax",
     path: "/",
     expires: expiresAt,

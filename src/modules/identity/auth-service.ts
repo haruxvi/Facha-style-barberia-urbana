@@ -20,6 +20,7 @@ export interface AuthContext {
   tenantId: string;
   tenantSlug: string;
   tenantName: string;
+  tenantLogoUrl: string | null;
   timezone: string;
   currency: string;
   role: Role;
@@ -161,6 +162,7 @@ export async function resolveSession(token: string | undefined | null): Promise<
     tenantId: membership.tenantId,
     tenantSlug: membership.tenant.slug,
     tenantName: membership.tenant.name,
+    tenantLogoUrl: membership.tenant.logoUrl,
     timezone: membership.tenant.timezone,
     currency: membership.tenant.currency,
     role: membership.role,
